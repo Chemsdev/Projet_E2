@@ -1,0 +1,99 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV
+from sklearn.compose import make_column_transformer
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.impute import KNNImputer
+from sklearn.pipeline import Pipeline
+from sklearn.linear_model import LinearRegression
+
+# Charger les données.
+silicon_valley = pd.read_csv("silicon_valley.csv")
+silicon_valley = silicon_valley.rename(columns={
+    'Unnamed: 0': 'ID logement', 
+    'housing_median_age': 'age moyen logement', 
+    'total_rooms': 'total pieces', 
+    'total_bedrooms': 'total chambres', 
+    'population': 'nb personne logement', 
+    'households': 'nb famille logement', 
+    'median_income': 'salaire median logement',
+    'median_house_value': 'valeur moyenne logement',
+    'ocean_proximity': 'proximité Ocean'
+})
+
+# Séparation des features & de la Target.
+X = silicon_valley.drop('salaire median logement', axis=1)  # Utilisez 1 au lieu de 'columns'.
+Y = silicon_valley["salaire median logement"]
+
+# Diviser les données en ensembles de formation et de test.
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
+
+# Listes des colonnes par type.
+target = ["salaire median logement"]
+drop = ["ID logement"]
+num_manquantes = ["total chambres"]
+cat = ["proximité Ocean"]
+passthrough = []
+text = []
+cat_manquantes = []
+
+scaling = [
+    "total pieces", 
+    "nb personne logement", 
+    "longitude", 
+    "latitude", 
+    "age moyen logement",
+    "nb famille logement", 
+    'valeur moyenne logement'
+]
+
+# Preprocessing complet.
+preprocessing = make_column_transformer(
+    (OneHotEncoder(handle_unknown="ignore"),  cat),
+    (KNNImputer(n_neighbors=1),               num_manquantes),
+    ("passthrough",                           passthrough),
+    ("drop",                                  drop)      
+)
+
+# Score de cross-validation pour la régression linéaire.
+score = cross_val_score(LinearRegression(), X, Y, cv=5).mean()
+
+# Créer un dictionnaire pour la régression linéaire.
+linear_regression = {}
+
+# Pipeline de régression linéaire.
+linear_regression["pipeline"] = Pipeline([
+    ('preprocessing', preprocessing),
+    ('linear_regression', LinearRegression())
+])
+
+# Grille pour la régression linéaire.
+linear_regression["hyperparamètres"] = {
+    'linear_regression__fit_intercept': [True, False]
+}
+
+# Gridsearch pour la régression linéaire.
+linear_regression["gridsearch"] = GridSearchCV(
+    estimator=linear_regression["pipeline"],
+    param_grid=linear_regression["hyperparamètres"],
+    scoring='r2',
+    cv=5  
+)
+
+# Entraîner le modèle sur l'ensemble de formation.
+linear_regression["gridsearch"].fit(X_train, Y_train)
+
+# Obtenir les meilleurs paramètres et le meilleur score.
+best_params = linear_regression["gridsearch"].best_params_
+best_score = linear_regression["gridsearch"].best_score_
+
+# Score sur ensemble de test.
+test_score = linear_regression["gridsearch"].score(X_test, Y_test)
+
+# Afficher les résultats.
+print("Meilleurs paramètres:", best_params)
+print("Meilleur score (sur ensemble d'entraînement):", best_score)
+print("Score sur ensemble de test:", test_score)
+
+# Entrainement sur toutes les données (si désiré).
+# pipeline_final = linear_regression["gridsearch"].best_estimator_
+# pipeline_final.fit(X, Y)
