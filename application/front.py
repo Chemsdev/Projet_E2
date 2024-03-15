@@ -13,8 +13,6 @@ def formulaire_css():
             box-shadow: rgb(0 0 0 / 20%) 0px 2px 1px -1px, rgb(0 0 0 / 14%) 0px 1px 1px 0px, rgb(0 0 0 / 12%) 0px 1px 3px 0px;
             border-radius: 10px;
             padding: 5%;
-            
-            /* Ajout des styles pour le centrage */
             display: flex;
             # justify-content: center;
             # align-items: center;
@@ -74,7 +72,7 @@ def button_css():
     )
 
     # Utiliser les boutons personnalisés
-    button2_clicked = st.button("**Estimer mon bien**", key="button2")
+    button2_clicked = st.button("**Estimé mon bien**", key="button2")
     return button2_clicked
 
 # =============================================================>
@@ -123,3 +121,61 @@ def local_css(file_name):
         st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
         
 # =============================================================>
+
+# Fonction permettent d'afficher la prédictions
+def css_recapitulatif(user_inputs, prediction):
+    
+    name_input = [
+        "longitude", 
+        "latitude", 
+        "Age médian", 
+        "Nombre de pièces",
+        "Nombre de chambres", 
+        "Nombre de populations dans un bloc", 
+        "Nombre de ménages dans un bloc", 
+        "Revenu médian",
+        "Proximité océan"
+    ]
+
+    st.markdown(
+        """
+        <style>
+            .custom-block2 {
+                background-color: #2c3a41; 
+                color: white; 
+
+              
+                border-radius: 10px; 
+
+                padding: 15px; 
+                
+                justify-content: center; 
+                align-items: center; 
+                
+            
+                font-weight: bold;
+                width: 410px; 
+                height: 400px;
+                margin-left:155px;
+                margin-top: 80px;
+                font-size: 18px;
+                transition: background-color 0.3s ease; 
+            }
+            .custom-block2:hover {
+                background-color: #2c3a41; 
+                cursor: pointer; 
+            }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+    st.markdown(
+        f"""
+        <div class='custom-block2'>
+           <h3 style="color:#f47a5c";"text-align:center";> Récapitulatif de votre bien </h1>
+            {'<br>'.join([f'{i} : <span style=color:#f4ddb1;font-size:21px;>{j} </span>' for (i, j) in zip(name_input, user_inputs)])}
+            <p></p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
